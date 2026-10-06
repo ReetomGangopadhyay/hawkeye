@@ -24,16 +24,13 @@ def make_job(
     job_file = JOBS_DIR / f"{experiment_id}.sh"
     result_file = RESULTS_DIR / f"{experiment_id}.csv"
 
-    #
-    # NOTE:
-    # You may need to modify the qsub resource syntax for SCC.
-    #
     script = f"""#!/bin/bash
 
 #$ -N exp_{experiment_id}
 #$ -pe omp {cpus}
 #$ -l h_rt={walltime}
 #$ -l gpus={gpus}
+#$ -l gpu_type=L40S
 #$ -j y
 
 echo "Experiment: {experiment_id}"
