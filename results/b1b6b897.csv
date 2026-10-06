@@ -1,0 +1,2 @@
+cpus,gpus,batch_size,workers,runtime,cpu_util,memory_util,gpu_util,gpu_memory_util,exit_code
+4,1,128,4,1.015636920928955,0.1,1.3,0.0,0.0,2

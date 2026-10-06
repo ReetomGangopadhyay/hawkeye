@@ -1,0 +1,6 @@
+Experiment: b1b6b897
+Host: scc-c01
+Start: Tue Oct  6 11:34:34 EDT 2026
+python: can't open file '/projectnb/rcs-intern/reetom/hawkeye/train.py': [Errno 2] No such file or directory
+{'cpus': 4, 'gpus': 1, 'batch_size': 128, 'workers': 4, 'runtime': 1.015636920928955, 'cpu_util': 0.1, 'memory_util': 1.3, 'gpu_util': 0.0, 'gpu_memory_util': 0.0, 'exit_code': 2}
+End: Tue Oct  6 11:34:36 EDT 2026

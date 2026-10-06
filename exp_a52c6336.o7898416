@@ -1,0 +1,16 @@
+Experiment: a52c6336
+Host: scc-c01
+Start: Tue Oct  6 11:42:42 EDT 2026
+/share/pkg.8/academic-ml/fall-2026/install/fall-2026-pyt/lib/python3.13/site-packages/torch/cuda/__init__.py:188: UserWarning: CUDA initialization: The NVIDIA driver on your system is too old (found version 11040). Please update your GPU driver by downloading and installing a new version from the URL: http://www.nvidia.com/Download/index.aspx Alternatively, go to: https://pytorch.org to install a PyTorch version that has been compiled with your version of the CUDA driver. (Triggered internally at /__w/pytorch/pytorch/c10/cuda/CUDAFunctions.cpp:119.)
+  return torch._C._cuda_getDeviceCount() > 0
+Traceback (most recent call last):
+  File "/projectnb/rcs-intern/reetom/hawkeye/train.py", line 186, in <module>
+    train(args)
+    ~~~~~^^^^^^
+  File "/projectnb/rcs-intern/reetom/hawkeye/train.py", line 72, in train
+    raise RuntimeError(
+        "CUDA GPU not available. Make sure the qsub job requested a GPU."
+    )
+RuntimeError: CUDA GPU not available. Make sure the qsub job requested a GPU.
+{'cpus': 4, 'gpus': 1, 'batch_size': 128, 'workers': 4, 'runtime': 26.40820598602295, 'cpu_util': 1.0692307692307692, 'memory_util': 1.4807692307692308, 'gpu_util': 0.0, 'gpu_memory_util': 0.0, 'exit_code': 1}
+End: Tue Oct  6 11:43:10 EDT 2026
