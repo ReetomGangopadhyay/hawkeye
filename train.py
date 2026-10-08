@@ -1,3 +1,4 @@
+
 import argparse
 import time
 
@@ -7,13 +8,6 @@ from torch.utils.data import Dataset, DataLoader
 
 
 class SyntheticDataset(Dataset):
-    """
-    Synthetic classification dataset.
-
-    cpu_work controls how much CPU-side preprocessing each
-    sample requires.
-    """
-
     def __init__(
         self,
         size=100_000,
@@ -30,25 +24,20 @@ class SyntheticDataset(Dataset):
         return self.size
 
     def __getitem__(self, idx):
-
-        # Generate synthetic input
         x = torch.randn(self.input_dim)
 
-        # Artificial CPU preprocessing
+        # Simulate CPU-side preprocessing.
         for _ in range(self.cpu_work):
             x = torch.sin(x) + torch.cos(x)
 
         y = torch.randint(
-            0,
-            self.num_classes,
-            (1,),
+            0, self.num_classes, (1,)
         ).item()
 
         return x, y
 
 
 class SimpleModel(nn.Module):
-
     def __init__(self, input_dim=1024, num_classes=10):
         super().__init__()
 
@@ -67,10 +56,10 @@ class SimpleModel(nn.Module):
 
 
 def train(args):
-
     if not torch.cuda.is_available():
         raise RuntimeError(
-            "CUDA GPU not available. Make sure the qsub job requested a GPU."
+            "CUDA GPU not available. "
+            "Make sure the qsub job requested a compatible GPU."
         )
 
     device = torch.device("cuda")
@@ -79,14 +68,12 @@ def train(args):
     print(f"CUDA: {torch.version.cuda}")
     print(f"GPU: {torch.cuda.get_device_name(0)}")
 
-    print()
-    print("Configuration")
+    print("\nConfiguration")
     print("-----------------------")
     print(f"Batch size: {args.batch_size}")
     print(f"Workers:    {args.workers}")
     print(f"CPU work:   {args.cpu_work}")
     print(f"Steps:      {args.steps}")
-    print()
 
     dataset = SyntheticDataset(
         cpu_work=args.cpu_work,
@@ -97,6 +84,8 @@ def train(args):
         batch_size=args.batch_size,
         num_workers=args.workers,
         pin_memory=True,
+        drop_last=True,
+        persistent_workers=args.workers > 0,
     )
 
     model = SimpleModel().to(device)
@@ -108,53 +97,55 @@ def train(args):
 
     criterion = nn.CrossEntropyLoss()
 
-    start = time.time()
-
     step = 0
 
-    for x, y in loader:
+    # Initialize the GPU before timing.
+    torch.cuda.synchronize()
+    start = time.perf_counter()
 
-        if step >= args.steps:
-            break
+    # Repeat the dataset until all requested steps complete.
+    while step < args.steps:
+        for x, y in loader:
+            if step >= args.steps:
+                break
 
-        x = x.to(device, non_blocking=True)
-        y = y.to(device, non_blocking=True)
+            x = x.to(device, non_blocking=True)
+            y = y.to(device, non_blocking=True)
 
-        optimizer.zero_grad()
+            optimizer.zero_grad()
 
-        output = model(x)
+            output = model(x)
+            loss = criterion(output, y)
 
-        loss = criterion(output, y)
+            loss.backward()
+            optimizer.step()
 
-        loss.backward()
+            if step % 20 == 0:
+                print(
+                    f"step={step:4d} "
+                    f"loss={loss.item():.4f}",
+                    flush=True,
+                )
 
-        optimizer.step()
+            step += 1
 
-        if step % 20 == 0:
-            print(
-                f"step={step:4d} "
-                f"loss={loss.item():.4f}"
-            )
-
-        step += 1
-
-    # Wait for GPU operations to finish
+    # Ensure all GPU operations finish before stopping timer.
     torch.cuda.synchronize()
 
-    runtime = time.time() - start
+    runtime = time.perf_counter() - start
 
     samples = step * args.batch_size
+    throughput = samples / runtime
 
-    print()
-    print("Results")
+    print("\nResults")
     print("-----------------------")
     print(f"Runtime:    {runtime:.2f} sec")
+    print(f"Steps:      {step}")
     print(f"Samples:    {samples}")
-    print(f"Throughput: {samples / runtime:.2f} samples/sec")
+    print(f"Throughput: {throughput:.2f} samples/sec")
 
 
-if __name__ == "__main__":
-
+def main():
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -184,3 +175,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     train(args)
+    
+if __name__ == "__main__":
+    main()
